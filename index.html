@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>XScore.africa — Rate Your Experience</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0f14;
+    --surface: #161920;
+    --surface2: #1e2130;
+    --border: #2a2f42;
+    --border2: #353c55;
+    --text: #f0f2f8;
+    --muted: #8b91a8;
+    --accent: #4f8ef7;
+    --accent-bg: rgba(79,142,247,0.12);
+    --accent-border: rgba(79,142,247,0.35);
+    --gold: #e89b1a;
+    --success: #2ecc71;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+
+  .header { margin-bottom: 2.5rem; }
+  .logo { font-size: 13px; font-weight: 600; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+  .logo span { color: var(--accent); }
+  .title { font-size: 26px; font-weight: 700; color: var(--text); line-height: 1.25; }
+  .subtitle { font-size: 14px; color: var(--muted); margin-top: 6px; }
+
+  .progress { display: flex; gap: 6px; margin-bottom: 2rem; }
+  .prog-dot { height: 3px; flex: 1; border-radius: 2px; background: var(--border2); transition: background 0.25s; }
+  .prog-dot.done { background: var(--accent); }
+
+  .step { display: none; animation: fadeIn 0.2s ease; }
+  .step.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .field { margin-bottom: 1.5rem; }
+  .field label {
+    display: block; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 8px;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 12px 14px; font-size: 15px;
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: var(--radius); color: var(--text);
+    font-family: inherit; outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field input::placeholder, .field textarea::placeholder { color: var(--muted); opacity: 0.6; }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,142,247,0.15);
+  }
+  .field textarea { resize: vertical; min-height: 100px; line-height: 1.6; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .pill {
+    padding: 7px 14px; border-radius: 20px; font-size: 13px;
+    cursor: pointer; border: 1px solid var(--border2);
+    background: var(--surface); color: var(--muted);
+    transition: all 0.15s; user-select: none;
+  }
+  .pill:hover { border-color: var(--accent); color: var(--accent); }
+  .pill.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+
+  .company-card {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: var(--radius-lg); padding: 14px 18px; margin-bottom: 1.5rem;
+  }
+  .avatar {
+    width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0;
+    background: var(--accent-bg); border: 1px solid var(--accent-border);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px; color: var(--accent);
+  }
+  .company-info .name { font-weight: 600; font-size: 15px; color: var(--text); }
+  .company-info .cat { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  .dims { display: flex; flex-direction: column; gap: 12px; margin-bottom: 1.5rem; }
+  .dim-row {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 16px;
+    transition: border-color 0.15s;
+  }
+  .dim-row.rated { border-color: var(--border2); }
+  .dim-label { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .dim-sub { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .stars { display: flex; gap: 6px; }
+  .star { font-size: 26px; cursor: pointer; color: var(--border2); transition: color 0.1s, transform 0.1s; user-select: none; }
+  .star:hover { transform: scale(1.15); }
+  .star.lit { color: var(--gold); }
+
+  .score-preview {
+    background: var(--accent-bg); border: 1px solid var(--accent-border);
+    border-radius: var(--radius-lg); padding: 16px 20px; margin-bottom: 1.5rem;
+    display: none;
+  }
+  .score-preview.show { display: block; }
+  .score-lbl { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); opacity: 0.8; margin-bottom: 6px; }
+  .score-row { display: flex; align-items: baseline; gap: 6px; }
+  .score-big { font-size: 42px; font-weight: 800; color: var(--accent); }
+  .score-denom { font-size: 16px; color: var(--accent); opacity: 0.6; }
+  .score-verdict { font-size: 13px; color: var(--accent); opacity: 0.8; margin-top: 4px; }
+  .bar-wrap { background: rgba(79,142,247,0.1); border-radius: 4px; height: 5px; margin-top: 12px; }
+  .bar { height: 5px; border-radius: 4px; background: var(--accent); transition: width 0.4s ease; }
+
+  .btn-row { display: flex; gap: 10px; align-items: center; margin-top: 0.5rem; }
+  .btn {
+    padding: 13px 28px; border-radius: var(--radius); font-size: 15px;
+    font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s;
+    border: 1px solid;
+  }
+  .btn-primary {
+    background: var(--accent); color: #fff; border-color: var(--accent);
+  }
+  .btn-primary:hover { background: #6ba0f8; border-color: #6ba0f8; }
+  .btn-secondary {
+    background: transparent; color: var(--muted); border-color: var(--border2);
+  }
+  .btn-secondary:hover { color: var(--text); border-color: var(--text); }
+
+  .success-wrap { text-align: center; padding: 1rem 0 2rem; }
+  .check-circle {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: rgba(46,204,113,0.12); border: 1px solid rgba(46,204,113,0.3);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.5rem; font-size: 28px; color: var(--success);
+  }
+  .success-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .success-sub { font-size: 14px; color: var(--muted); margin-bottom: 2rem; }
+
+  .result-card {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: var(--radius-lg); padding: 20px; text-align: left;
+  }
+  .result-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+  .result-co { font-weight: 700; font-size: 16px; color: var(--text); }
+  .result-cat { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .result-score {
+    font-size: 28px; font-weight: 800; color: var(--accent);
+    background: var(--accent-bg); padding: 6px 14px;
+    border-radius: var(--radius); border: 1px solid var(--accent-border);
+  }
+  .result-score small { font-size: 14px; opacity: 0.6; }
+  .result-dim { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .result-dim:last-of-type { border-bottom: none; }
+  .result-dim-name { font-size: 13px; color: var(--muted); }
+  .result-dim-stars { color: var(--gold); font-size: 14px; letter-spacing: 1px; }
+  .result-comment { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); font-style: italic; line-height: 1.6; }
+
+  .share-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 1.5rem; padding: 10px 20px;
+    border: 1px solid var(--border2); border-radius: var(--radius);
+    background: transparent; color: var(--muted); font-size: 13px;
+    cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .share-btn:hover { color: var(--text); border-color: var(--text); }
+
+  @media (max-width: 500px) {
+    body { padding: 1.5rem 0.75rem 3rem; }
+    .title { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="logo">X<span>Score</span>.africa</div>
+    <div class="title">Rate your experience</div>
+    <div class="subtitle">Turn your experience into data that holds companies accountable</div>
+  </div>
+
+  <div class="progress">
+    <div class="prog-dot done" id="p1"></div>
+    <div class="prog-dot" id="p2"></div>
+    <div class="prog-dot" id="p3"></div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="step active" id="step1">
+    <div class="field">
+      <label>Which organisation are you rating?</label>
+      <input type="text" id="companyInput" placeholder="e.g. MTN Uganda, Stanbic Bank, Mulago Hospital..." autocomplete="off" />
+      <div class="hint">Type the name as you know it</div>
+    </div>
+    <div class="field">
+      <label>Category</label>
+      <div class="pills">
+        <div class="pill" data-cat="Telecom">Telecom</div>
+        <div class="pill" data-cat="Bank">Bank</div>
+        <div class="pill" data-cat="Hospital">Hospital</div>
+        <div class="pill" data-cat="School / University">School / University</div>
+        <div class="pill" data-cat="Insurance">Insurance</div>
+        <div class="pill" data-cat="Government">Government</div>
+        <div class="pill" data-cat="Fuel Station">Fuel Station</div>
+        <div class="pill" data-cat="Restaurant / Eatout">Restaurant / Eatout</div>
+        <div class="pill" data-cat="Supermarket / Retail">Supermarket / Retail</div>
+        <div class="pill" data-cat="Transport">Transport</div>
+        <div class="pill" data-cat="Other">Other</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Specific service or experience</label>
+      <input type="text" id="serviceInput" placeholder="e.g. Mobile Money, Branch visit, Outpatient, Exam results..." />
+      <div class="hint">Optional but helps others understand your context</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goStep2()">Continue &rarr;</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step" id="step2">
+    <div class="company-card">
+      <div class="avatar" id="av1">MT</div>
+      <div class="company-info">
+        <div class="name" id="cd-name">MTN Uganda</div>
+        <div class="cat" id="cd-cat">Telecom</div>
+      </div>
+    </div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:1.25rem;">Rate each dimension — 1 star = very poor, 5 stars = excellent</div>
+    <div class="dims" id="dimsContainer"></div>
+    <div class="score-preview" id="scorePreview">
+      <div class="score-lbl">Live XScore</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreNum">0</div>
+        <div class="score-denom">/ 100</div>
+      </div>
+      <div class="score-verdict" id="scoreVerdict"></div>
+      <div class="bar-wrap"><div class="bar" id="scoreBar" style="width:0%"></div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goStep3()">Next &rarr;</button>
+      <button class="btn btn-secondary" onclick="showStep(1)">Back</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step" id="step3">
+    <div class="company-card">
+      <div class="avatar" id="av2">MT</div>
+      <div class="company-info">
+        <div class="name" id="cd-name2"></div>
+        <div class="cat" id="cd-cat2"></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Tell us what happened</label>
+      <textarea id="commentInput" placeholder="Describe your experience honestly and specifically. The public needs to know what you went through."></textarea>
+    </div>
+    <div class="field">
+      <label>Your phone number</label>
+      <input type="tel" id="phoneInput" placeholder="+256 700 000 000" />
+      <div class="hint">For verification only. Never displayed publicly.</div>
+    </div>
+    <div class="score-preview show" id="finalPreview">
+      <div class="score-lbl">Your XScore for <span id="finalCoName" style="color:var(--accent)"></span></div>
+      <div class="score-row">
+        <div class="score-big" id="finalScore">0</div>
+        <div class="score-denom">/ 100</div>
+      </div>
+      <div class="score-verdict" id="finalVerdict"></div>
+      <div class="bar-wrap"><div class="bar" id="finalBar" style="width:0%"></div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="submitForm()">Submit Rating</button>
+      <button class="btn btn-secondary" onclick="showStep(2)">Back</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 SUCCESS -->
+  <div class="step" id="step4">
+    <div class="success-wrap">
+      <div class="check-circle">&#10003;</div>
+      <div class="success-title">Rating submitted!</div>
+      <div class="success-sub">Your experience is now part of Uganda's CX data.<br>Together we hold companies accountable.</div>
+      <div class="result-card" id="resultCard"></div>
+      <button class="share-btn" onclick="copyScore()">&#128279; Copy scorecard link</button>
+      <br/>
+      <button class="btn btn-secondary" onclick="resetForm()" style="margin-top:1rem;">Rate another organisation</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const DIMS = {
+  "Telecom": [
+    { key: "network", label: "Network & connection quality", sub: "Signal strength, call drops, data speed" },
+    { key: "mobile_money", label: "Mobile money reliability", sub: "Transaction speed, failures, reversals" },
+    { key: "customer_care", label: "Customer care", sub: "Wait time, helpfulness, issue resolution" },
+    { key: "value", label: "Value for money", sub: "Are you getting what you pay for?" },
+    { key: "app", label: "App / USSD experience", sub: "Ease of use, uptime, error frequency" }
+  ],
+  "Bank": [
+    { key: "branch", label: "Branch experience", sub: "Queue time, environment, process clarity" },
+    { key: "staff", label: "Staff attitude", sub: "Friendliness, respect, helpfulness" },
+    { key: "digital", label: "Mobile / internet banking", sub: "App stability, features, transfer speed" },
+    { key: "resolution", label: "Problem resolution", sub: "Did they actually fix your issue?" },
+    { key: "transparency", label: "Transparency", sub: "Clear fees and honest communication" }
+  ],
+  "Hospital": [
+    { key: "wait", label: "Wait time", sub: "Reception to doctor or treatment" },
+    { key: "staff", label: "Staff empathy", sub: "Doctors, nurses, reception attitude" },
+    { key: "clarity", label: "Diagnosis clarity", sub: "Did they explain your condition clearly?" },
+    { key: "drugs", label: "Drug / equipment availability", sub: "Were needed medications available?" },
+    { key: "billing", label: "Billing transparency", sub: "Were charges clear and fair?" }
+  ],
+  "School / University": [
+    { key: "teaching", label: "Teaching quality", sub: "Lecturer competence and engagement" },
+    { key: "admin", label: "Administration", sub: "Registration, results, communication" },
+    { key: "facilities", label: "Facilities", sub: "Labs, library, internet, classrooms" },
+    { key: "value", label: "Value for fees", sub: "Are you getting what you pay for?" },
+    { key: "welfare", label: "Student welfare", sub: "Support, safety, wellbeing" }
+  ],
+  "Insurance": [
+    { key: "clarity", label: "Policy clarity", sub: "Were terms explained properly?" },
+    { key: "claims", label: "Claims process", sub: "Speed and ease of claim settlement" },
+    { key: "staff", label: "Staff helpfulness", sub: "Agent attitude and knowledge" },
+    { key: "value", label: "Value for money", sub: "Fair premiums for coverage offered" },
+    { key: "digital", label: "Digital experience", sub: "App, portal, online services" }
+  ],
+  "Government": [
+    { key: "wait", label: "Queue / wait time", sub: "How long before you were served" },
+    { key: "staff", label: "Staff attitude", sub: "Were they respectful and helpful?" },
+    { key: "clarity", label: "Process clarity", sub: "Did they explain what to do?" },
+    { key: "integrity", label: "Integrity", sub: "Were you treated fairly without pressure?" },
+    { key: "digital", label: "Digital services", sub: "Online portals and e-services availability" }
+  ],
+  "Fuel Station": [
+    { key: "speed", label: "Service speed", sub: "How fast were you attended to?" },
+    { key: "staff", label: "Staff friendliness", sub: "Attitude of attendants" },
+    { key: "quality", label: "Fuel quality confidence", sub: "Do you trust the fuel quality?" },
+    { key: "facilities", label: "Facility cleanliness", sub: "Toilets, shop, forecourt" },
+    { key: "price", label: "Price consistency", sub: "Were prices clearly displayed?" }
+  ],
+  "Restaurant / Eatout": [
+    { key: "food", label: "Food quality", sub: "Taste, freshness, presentation" },
+    { key: "wait", label: "Wait time", sub: "Order to delivery time" },
+    { key: "staff", label: "Staff attitude", sub: "Friendliness and attentiveness" },
+    { key: "cleanliness", label: "Cleanliness", sub: "Tables, utensils, environment" },
+    { key: "value", label: "Value for money", sub: "Fair price for what you got" }
+  ],
+  "Supermarket / Retail": [
+    { key: "stock", label: "Product availability", sub: "Was what you needed in stock?" },
+    { key: "staff", label: "Staff helpfulness", sub: "Attentiveness and product knowledge" },
+    { key: "checkout", label: "Checkout speed", sub: "Queue and payment process" },
+    { key: "cleanliness", label: "Store cleanliness", sub: "Organisation and hygiene" },
+    { key: "value", label: "Value for money", sub: "Fair pricing" }
+  ],
+  "Transport": [
+    { key: "punctuality", label: "Punctuality", sub: "On time arrival and departure" },
+    { key: "safety", label: "Safety", sub: "Driving, vehicle condition, security" },
+    { key: "comfort", label: "Comfort", sub: "Vehicle condition, space, cleanliness" },
+    { key: "staff", label: "Staff attitude", sub: "Driver and crew behaviour" },
+    { key: "value", label: "Value for money", sub: "Fair fare for distance" }
+  ],
+  "Other": [
+    { key: "service", label: "Overall service quality", sub: "How good was the service?" },
+    { key: "staff", label: "Staff attitude", sub: "Were they helpful and respectful?" },
+    { key: "wait", label: "Wait / queue time", sub: "Time before you were attended to" },
+    { key: "resolution", label: "Problem resolution", sub: "Was your issue resolved?" },
+    { key: "value", label: "Value for money", sub: "Fair pricing for what you received" }
+  ]
+};
+
+const KNOWN = {
+  "mtn": "Telecom", "airtel": "Telecom", "africell": "Telecom",
+  "stanbic": "Bank", "absa": "Bank", "dfcu": "Bank", "equity": "Bank",
+  "centenary": "Bank", "cairo": "Bank", "post bank": "Bank",
+  "mulago": "Hospital", "ihk": "Hospital", "norvik": "Hospital",
+  "case hospital": "Hospital", "nsambya": "Hospital",
+  "makerere": "School / University", "mak": "School / University",
+  "umu": "School / University", "nkumba": "School / University",
+  "mubs": "School / University", "kyambogo": "School / University",
+  "jubilee": "Insurance", "britam": "Insurance", "aar": "Insurance",
+  "ura": "Government", "nwsc": "Government", "kcca": "Government",
+  "unra": "Government", "nira": "Government", "uetcl": "Government",
+  "shell": "Fuel Station", "total": "Fuel Station", "stabex": "Fuel Station",
+  "kfc": "Restaurant / Eatout", "cafe javas": "Restaurant / Eatout",
+  "javas": "Restaurant / Eatout", "chicken tonight": "Restaurant / Eatout",
+  "game": "Supermarket / Retail", "capital shoppers": "Supermarket / Retail",
+  "quality": "Supermarket / Retail"
+};
+
+const verdicts = {
+  90: "Excellent", 75: "Very good", 60: "Good", 45: "Average",
+  30: "Poor", 0: "Very poor"
+};
+
+function getVerdict(score) {
+  for (const [threshold, label] of Object.entries(verdicts).sort((a,b) => b[0]-a[0])) {
+    if (score >= parseInt(threshold)) return label;
+  }
+  return "Very poor";
+}
+
+let state = { company: "", category: "", service: "", ratings: {}, comment: "", phone: "" };
+
+document.getElementById("companyInput").addEventListener("input", function() {
+  const val = this.value.toLowerCase();
+  document.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
+  for (const [key, cat] of Object.entries(KNOWN)) {
+    if (val.includes(key)) {
+      state.category = cat;
+      document.querySelectorAll(".pill").forEach(p => {
+        if (p.dataset.cat === cat) p.classList.add("active");
+      });
+      break;
+    }
+  }
+});
+
+document.querySelectorAll(".pill").forEach(p => {
+  p.addEventListener("click", function() {
+    document.querySelectorAll(".pill").forEach(x => x.classList.remove("active"));
+    this.classList.add("active");
+    state.category = this.dataset.cat;
+  });
+});
+
+function initials(name) {
+  return name.trim().split(" ").slice(0,2).map(w => w[0]||"").join("").toUpperCase() || "?";
+}
+
+function goStep2() {
+  const co = document.getElementById("companyInput").value.trim();
+  const svc = document.getElementById("serviceInput").value.trim();
+  if (!co) { document.getElementById("companyInput").focus(); return; }
+  if (!state.category) { alert("Please select a category to continue"); return; }
+  state.company = co; state.service = svc;
+  const ini = initials(co);
+  const catSvc = state.category + (svc ? " · " + svc : "");
+  ["av1"].forEach(id => document.getElementById(id).textContent = ini);
+  document.getElementById("cd-name").textContent = co;
+  document.getElementById("cd-cat").textContent = catSvc;
+  document.getElementById("av2").textContent = ini;
+  document.getElementById("cd-name2").textContent = co;
+  document.getElementById("cd-cat2").textContent = catSvc;
+  buildDims();
+  showStep(2);
+}
+
+function buildDims() {
+  const dims = DIMS[state.category] || DIMS["Other"];
+  const c = document.getElementById("dimsContainer");
+  c.innerHTML = ""; state.ratings = {};
+  dims.forEach(d => {
+    state.ratings[d.key] = 0;
+    const row = document.createElement("div");
+    row.className = "dim-row"; row.id = "row-" + d.key;
+    row.innerHTML = `<div class="dim-label">${d.label}</div>
+      <div class="dim-sub">${d.sub}</div>
+      <div class="stars" data-key="${d.key}">
+        ${[1,2,3,4,5].map(i=>`<span class="star" data-val="${i}">&#9733;</span>`).join("")}
+      </div>`;
+    c.appendChild(row);
+    row.querySelectorAll(".star").forEach(s => {
+      s.addEventListener("click", function() {
+        const key = this.closest(".stars").dataset.key;
+        const val = parseInt(this.dataset.val);
+        state.ratings[key] = val;
+        document.getElementById("row-"+key).classList.add("rated");
+        this.closest(".stars").querySelectorAll(".star").forEach((st,i) => st.classList.toggle("lit", i < val));
+        updateScore();
+      });
+      s.addEventListener("mouseover", function() {
+        const val = parseInt(this.dataset.val);
+        this.closest(".stars").querySelectorAll(".star").forEach((st,i) => { st.style.color = i < val ? "#e89b1a" : ""; });
+      });
+      s.addEventListener("mouseout", function() {
+        this.closest(".stars").querySelectorAll(".star").forEach(st => st.style.color = "");
+      });
+    });
+  });
+}
+
+function calcScore() {
+  const vals = Object.values(state.ratings).filter(v => v > 0);
+  if (!vals.length) return 0;
+  return Math.round((vals.reduce((a,b)=>a+b,0) / vals.length / 5) * 100);
+}
+
+function updateScore() {
+  const score = calcScore();
+  document.getElementById("scorePreview").classList.add("show");
+  document.getElementById("scoreNum").textContent = score;
+  document.getElementById("scoreBar").style.width = score + "%";
+  document.getElementById("scoreVerdict").textContent = getVerdict(score);
+  document.getElementById("finalScore").textContent = score;
+  document.getElementById("finalBar").style.width = score + "%";
+  document.getElementById("finalVerdict").textContent = getVerdict(score);
+}
+
+function goStep3() {
+  const rated = Object.values(state.ratings).filter(v => v > 0).length;
+  const total = Object.keys(state.ratings).length;
+  if (rated < Math.ceil(total * 0.6)) {
+    alert("Please rate at least " + Math.ceil(total * 0.6) + " dimensions to continue");
+    return;
+  }
+  document.getElementById("finalCoName").textContent = state.company;
+  updateScore();
+  showStep(3);
+}
+
+function submitForm() {
+  const phone = document.getElementById("phoneInput").value.trim();
+  const comment = document.getElementById("commentInput").value.trim();
+  if (!phone) { document.getElementById("phoneInput").focus(); return; }
+  state.phone = phone; state.comment = comment;
+
+  const score = calcScore();
+  const dims = DIMS[state.category] || DIMS["Other"];
+
+  let dimRows = dims.map(d => {
+    const r = state.ratings[d.key] || 0;
+    return `<div class="result-dim">
+      <span class="result-dim-name">${d.label}</span>
+      <span class="result-dim-stars">${"★".repeat(r)}${"☆".repeat(5-r)}</span>
+    </div>`;
+  }).join("");
+
+  document.getElementById("resultCard").innerHTML = `
+    <div class="result-header">
+      <div>
+        <div class="result-co">${state.company}</div>
+        <div class="result-cat">${state.category}${state.service ? " · " + state.service : ""}</div>
+      </div>
+      <div class="result-score">${score}<small>/100</small></div>
+    </div>
+    ${dimRows}
+    ${comment ? `<div class="result-comment">"${comment}"</div>` : ""}
+  `;
+
+  // ── Google Sheets submission ──────────────────────────────────────
+  const SHEET_URL = "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+  const payload = {
+    timestamp: new Date().toISOString(),
+    company: state.company,
+    category: state.category,
+    service: state.service,
+    score: score,
+    comment: state.comment,
+    phone: state.phone,
+    ...Object.fromEntries(dims.map(d => ["dim_" + d.key, state.ratings[d.key] || 0]))
+  };
+  if (SHEET_URL !== "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+    fetch(SHEET_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    }).catch(err => console.warn("Sheet submission failed:", err));
+  }
+  // ─────────────────────────────────────────────────────────────────
+
+  showStep(4);
+}
+
+function showStep(n) {
+  document.querySelectorAll(".step").forEach(s => s.classList.remove("active"));
+  document.getElementById("step" + n).classList.add("active");
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById("p" + i).classList.toggle("done", i <= n);
+  }
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function copyScore() {
+  navigator.clipboard.writeText(window.location.href).then(() => alert("Link copied!")).catch(() => alert("Copy the URL from your browser address bar"));
+}
+
+function resetForm() {
+  state = { company: "", category: "", service: "", ratings: {}, comment: "", phone: "" };
+  ["companyInput","serviceInput","commentInput","phoneInput"].forEach(id => document.getElementById(id).value = "");
+  document.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
+  document.getElementById("scorePreview").classList.remove("show");
+  showStep(1);
+}
+</script>
+</body>
+</html>
