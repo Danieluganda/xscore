@@ -550,16 +550,25 @@ function submitForm() {
   `;
 
   // ── Google Sheets submission ──────────────────────────────────────
-  const SHEET_URL = "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+  const SHEET_URL = "https://script.google.com/macros/s/AKfycbyHG7wxOwn4-uvO6Sc1XvnXz2F3Z_DUQJ8kezyP-Qv54P4CDiQqcoA3638UCgQOwL0iRw/exec";
   const payload = {
     timestamp: new Date().toISOString(),
     company: state.company,
     category: state.category,
     service: state.service,
     score: score,
+    dim1_name: dims[0] ? dims[0].label : "",
+    dim1_score: dims[0] ? (state.ratings[dims[0].key] || 0) : 0,
+    dim2_name: dims[1] ? dims[1].label : "",
+    dim2_score: dims[1] ? (state.ratings[dims[1].key] || 0) : 0,
+    dim3_name: dims[2] ? dims[2].label : "",
+    dim3_score: dims[2] ? (state.ratings[dims[2].key] || 0) : 0,
+    dim4_name: dims[3] ? dims[3].label : "",
+    dim4_score: dims[3] ? (state.ratings[dims[3].key] || 0) : 0,
+    dim5_name: dims[4] ? dims[4].label : "",
+    dim5_score: dims[4] ? (state.ratings[dims[4].key] || 0) : 0,
     comment: state.comment,
-    phone: state.phone,
-    ...Object.fromEntries(dims.map(d => ["dim_" + d.key, state.ratings[d.key] || 0]))
+    phone: state.phone
   };
   if (SHEET_URL !== "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
     fetch(SHEET_URL, {
