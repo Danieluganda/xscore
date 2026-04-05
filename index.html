@@ -550,7 +550,7 @@ function submitForm() {
   `;
 
   // ── Google Sheets submission ──────────────────────────────────────
-  const SHEET_URL = "https://script.google.com/macros/s/AKfycbyHG7wxOwn4-uvO6Sc1XvnXz2F3Z_DUQJ8kezyP-Qv54P4CDiQqcoA3638UCgQOwL0iRw/exec";
+  const SHEET_URL = "https://script.google.com/macros/s/AKfycbybZmvwpADVeuyJ-R_L35hBQrQXqDRPkcGPmWSMXw5lYyUp5myH1RfaUId6j6sBbCwAgQ/exec";
   const payload = {
     timestamp: new Date().toISOString(),
     company: state.company,
@@ -571,11 +571,10 @@ function submitForm() {
     phone: state.phone
   };
   if (SHEET_URL !== "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
-    fetch(SHEET_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+    const params = new URLSearchParams(payload).toString();
+    fetch(SHEET_URL + "?" + params, {
+      method: "GET",
+      mode: "no-cors"
     }).catch(err => console.warn("Sheet submission failed:", err));
   }
   // ─────────────────────────────────────────────────────────────────
